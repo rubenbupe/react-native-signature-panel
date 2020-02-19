@@ -20,6 +20,8 @@ interface SignaturePanelProps {
 	strokeColor?: string;
 	strokeWidth?: number;
 	onFingerUp?: (...args: any[]) => any;
+	onTouch?: (...args: any[]) => any;
+	onTouchEnd?: (...args: any[]) => any;
 	imageOutputSize?: number;
 	imageQuality?: number;
 	imageFormat?: 'jpg' | 'png' | 'webm' | 'raw';
@@ -42,6 +44,8 @@ class SignaturePanel extends React.Component<SignaturePanelProps, SignaturePanel
 		offsetX: 0,
 		offsetY: 0,
 		onFingerUp: () => {},
+		onTouch: () => {},
+		onTouchEnd: () => {},
 		outputType: 'tmpfile',
 		strokeColor: '#000',
 		strokeWidth: 3,
@@ -84,6 +88,20 @@ class SignaturePanel extends React.Component<SignaturePanelProps, SignaturePanel
 	}
 
 	/**
+	 * Resets the signature pad container
+	 * @param {GestureResponderEvent} e Event
+	 * @public
+	 */
+	public reset() {
+		this.setState({
+			paths: [],
+			points: [],
+			posX: 0,
+			posY: 0
+		});
+	}
+
+	/**
 	 * Detect the touch start and move events on the signature pad
 	 * @param {GestureResponderEvent} e Event
 	 * @private
@@ -99,6 +117,8 @@ class SignaturePanel extends React.Component<SignaturePanelProps, SignaturePanel
 			paths: this.state.paths,
 			points: [...points, { locationX, locationY }],
 		});
+
+		this.props.onTouch(e);
 	}
 
 	/**
@@ -117,6 +137,8 @@ class SignaturePanel extends React.Component<SignaturePanelProps, SignaturePanel
 			},
 			this.returnImageData({ paths, points })
 		);
+
+		this.props.onTouchEnd();
 	}
 
 	/**
