@@ -1,127 +1,123 @@
 import * as React from 'react';
-import {
-	View,
-	PanResponder,
-	PanResponderInstance,
-	StyleSheet,
-	PixelRatio,
-	GestureResponderEvent,
-	LayoutChangeEvent,
-} from 'react-native';
+import { View, StyleSheet, PixelRatio, LayoutChangeEvent, Animated } from 'react-native';
+import { PanGestureHandler, PanGestureHandlerGestureEvent, State } from 'react-native-gesture-handler';
 import Svg, { G, Path } from 'react-native-svg';
 import { captureRef as takeSnapshotAsync } from 'react-native-view-shot';
 
 interface SignaturePanelProps {
-	containerStyle?: object;
-	width?: string | number;
-	height?: string | number;
-	offsetX?: number;
-	offsetY?: number;
-	strokeColor?: string;
-	strokeWidth?: number;
-	onFingerUp?: (...args: any[]) => any;
-	onFingerUpTimeout?: number;
-	onTouch?: (...args: any[]) => any;
-	onTouchEnd?: (...args: any[]) => any;
-	imageOutputSize?: number;
-	imageQuality?: number;
-	imageFormat?: 'jpg' | 'png' | 'webm' | 'raw';
-	outputType?: 'tmpfile' | 'base64' | 'data-uri' | 'zip-base64';
+  containerStyle?: object;
+  width?: string | number;
+  height?: string | number;
+  offsetX?: number;
+  offsetY?: number;
+  strokeColor?: string;
+  strokeWidth?: number;
+  onFingerUp?: (...args: any[]) => any;
+  onTouch?: (...args: any[]) => any;
+  onTouchEnd?: (...args: any[]) => any;
+  imageOutputSize?: number;
+  imageQuality?: number;
+  imageFormat?: 'jpg' | 'png' | 'webm' | 'raw';
+  outputType?: 'tmpfile' | 'base64' | 'data-uri' | 'zip-base64';
 }
 
 interface SignaturePanelState {
-	paths: any[];
-	points: any[];
-	posX: number;
-	posY: number;
+  paths: any[];
+  points: any[];
+  posX: number;
+  posY: number;
 }
 
 class SignaturePanel extends React.Component<SignaturePanelProps, SignaturePanelState> {
-	public static defaultProps: SignaturePanelProps = {
-		height: 300,
-		imageFormat: 'png',
-		imageOutputSize: 480,
-		imageQuality: 1,
-		offsetX: 0,
-		offsetY: 0,
-		onFingerUp: () => {},
-		onFingerUpTimeout: 1000,
-		onTouch: () => {},
-		onTouchEnd: () => {},
-		outputType: 'tmpfile',
-		strokeColor: '#000',
-		strokeWidth: 3,
-		width: '100%',
-	};
+  public static defaultProps: SignaturePanelProps = {
+    height: 300,
+    imageFormat: 'png',
+    imageOutputSize: 480,
+    imageQuality: 1,
+    offsetX: 0,
+    offsetY: 0,
+    onFingerUp: () => {},
+    onTouch: () => {},
+    onTouchEnd: () => {},
+    outputType: 'tmpfile',
+    strokeColor: '#000',
+    strokeWidth: 3,
+    width: '100%',
+  };
 
-	public static timer: any = null;
-	private signatureContainer = React.createRef<View>();
-	private panResponder: PanResponderInstance;
+  public static timer: any = null;
+  private signatureContainer = React.createRef<View>();
 
-	constructor(props: SignaturePanelProps) {
-		super(props);
-		this.state = {
-			paths: [],
-			points: [],
-			posX: 0,
-			posY: 0,
-		};
-		this.panResponder = PanResponder.create({
-			onMoveShouldSetPanResponder: () => true,
-			onPanResponderGrant: e => this.onTouch(e),
-			onPanResponderMove: e => this.onTouch(e),
-			onPanResponderRelease: e => this.onTouchEnd(),
-			onStartShouldSetPanResponder: () => true,
-		});
-	}
-	public render() {
-		const { containerStyle, width, height } = this.props;
-		const { paths, points } = this.state;
-		return (
-			<View
-				{...this.panResponder.panHandlers}
-				ref={this.signatureContainer}
-				onLayout={this.onLayoutContainer}
-				style={[containerStyle, { width, height }]}
-			>
-				{this.renderSvg(paths, points)}
-			</View>
-		);
-	}
+  constructor(props: SignaturePanelProps) {
+    super(props);
+    this.state = {
+      paths: [],
+      points: [],
+      posX: 0,
+      posY: 0,
+    };
+  }
+  public render() {
+    const { containerStyle, width, height } = this.props;
+    const { paths, points } = this.state;
+    return (
+      <PanGestureHandler
+        minDeltaX={0}
+        minDeltaY={0}
+        maxPointers={1}
+        minPointers={1}
+        shouldCancelWhenOutside={true}
+        onHandlerStateChange={(e) => {
+          if (e.nativeEvent.oldState === State.ACTIVE && e.nativeEvent.state === State.END) this.onTouchEnd();
+          else if (e.nativeEvent.state === State.BEGAN) this.onTouch(e);
+        }}
+        onGestureEvent={(e) => this.onTouch(e)}
+      >
+        <Animated.View
+          ref={this.signatureContainer}
+          onLayout={this.onLayoutContainer}
+          style={[containerStyle, { width, height }]}
+        >
+          {this.renderSvg(paths, points)}
+        </Animated.View>
+      </PanGestureHandler>
+    );
+  }
 
-	/**
-	 * Resets the signature pad container
-	 * @param {GestureResponderEvent} e Event
-	 * @public
-	 */
-	public reset() {
-		this.setState({
-			paths: [],
-			points: [],
-			posX: 0,
-			posY: 0,
-		});
-	}
+  /**
+   * Resets the signature pad container
+   * @param {GestureResponderEvent} e Event
+   * @public
+   */
+  public reset() {
+    this.setState({
+      paths: [],
+      points: [],
+      posX: 0,
+      posY: 0,
+    });
+  }
 
-	/**
-	 * Detect the touch start and move events on the signature pad
-	 * @param {GestureResponderEvent} e Event
-	 * @private
-	 */
+  /**
+   * Detect the touch start and move events on the signature pad
+   * @param {GestureResponderEvent} e Event
+   * @private
+   */
 
-	private onTouch(e: GestureResponderEvent) {
-		const { locationX, locationY } = e.nativeEvent;
-		const { points } = this.state;
-		if (SignaturePanel.timer) {
-			clearTimeout(SignaturePanel.timer);
-		}
-		this.setState({
-			paths: this.state.paths,
-			points: [...points, { locationX, locationY }],
-		});
+  private onTouch(e: PanGestureHandlerGestureEvent) {
+    const { x: locationX, y: locationY } = e.nativeEvent;
 
-		this.props.onTouch(e);
-	}
+    const { points } = this.state;
+    if (SignaturePanel.timer) {
+      clearTimeout(SignaturePanel.timer);
+    }
+    this.setState({
+      paths: this.state.paths,
+      points: [...points, { locationX, locationY }],
+    });
+
+    this.props.onTouch?.(e);
+  }
 
 	/**
 	 * Detect when the user has finished the gesture
