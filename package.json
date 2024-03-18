@@ -6,7 +6,8 @@
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "tsc",
-		"lint": "tslint -p tsconfig.json"
+		"lint": "tslint -p tsconfig.json",
+		"postinstall": "tsc"
 	},
 	"repository": {
 		"type": "git",
