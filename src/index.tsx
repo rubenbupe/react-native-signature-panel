@@ -15,6 +15,7 @@ interface SignaturePanelProps {
   onFingerUp?: (...args: any[]) => any;
   onTouch?: (...args: any[]) => any;
   onTouchEnd?: (...args: any[]) => any;
+	onFingerUpTimeout?: (...args: any[]) => any;
   imageOutputSize?: number;
   imageQuality?: number;
   imageFormat?: 'jpg' | 'png' | 'webm' | 'raw';
@@ -62,8 +63,6 @@ class SignaturePanel extends React.Component<SignaturePanelProps, SignaturePanel
     const { paths, points } = this.state;
     return (
       <PanGestureHandler
-        minDeltaX={0}
-        minDeltaY={0}
         maxPointers={1}
         minPointers={1}
         shouldCancelWhenOutside={true}
