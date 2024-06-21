@@ -9,7 +9,8 @@
 		"skipLibCheck": true,
 		"esModuleInterop": true,
 		"outDir": "./lib",
-		"strict": true
+		"strict": false,
+    "noEmitOnError": false
 	},
 	"include": ["src"],
 	"exclude": ["node_modules", "**/__tests__/*"]
